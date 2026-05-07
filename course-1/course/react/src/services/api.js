@@ -1,6 +1,34 @@
 // API Service for real data connectivity
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
+// ── Browser-side cache ──────────────────────────────────────────────────────
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const cache = {
+  get(key) {
+    try {
+      const entry = JSON.parse(localStorage.getItem(`rg_api_${key}`) || 'null');
+      if (!entry) return null;
+      if (Date.now() - entry.ts > CACHE_TTL_MS) { this.del(key); return null; }
+      return entry.data;
+    } catch { return null; }
+  },
+  set(key, data) {
+    try { localStorage.setItem(`rg_api_${key}`, JSON.stringify({ ts: Date.now(), data })); } catch {}
+  },
+  del(key) {
+    try { localStorage.removeItem(`rg_api_${key}`); } catch {}
+  },
+  invalidate(prefix) {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith(`rg_api_${prefix}`))
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
+  }
+};
+// ────────────────────────────────────────────────────────────────────────────
+
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -32,31 +60,39 @@ class ApiService {
 
   // Course API methods
   async getCourses() {
-    return this.request('/courses');
+    const cached = cache.get('courses');
+    if (cached) return cached;
+    const result = await this.request('/courses');
+    cache.set('courses', result);
+    return result;
   }
 
   async getCourse(id) {
-    return this.request(`/courses/${id}`);
+    const cached = cache.get(`course_${id}`);
+    if (cached) return cached;
+    const result = await this.request(`/courses/${id}`);
+    cache.set(`course_${id}`, result);
+    return result;
   }
 
   async createCourse(courseData) {
-    return this.request('/courses', {
-      method: 'POST',
-      body: JSON.stringify(courseData),
-    });
+    const result = await this.request('/courses', { method: 'POST', body: JSON.stringify(courseData) });
+    cache.invalidate('course');
+    return result;
   }
 
   async updateCourse(id, courseData) {
-    return this.request(`/courses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(courseData),
-    });
+    const result = await this.request(`/courses/${id}`, { method: 'PUT', body: JSON.stringify(courseData) });
+    cache.del(`course_${id}`);
+    cache.del('courses');
+    return result;
   }
 
   async deleteCourse(id) {
-    return this.request(`/courses/${id}`, {
-      method: 'DELETE',
-    });
+    const result = await this.request(`/courses/${id}`, { method: 'DELETE' });
+    cache.del(`course_${id}`);
+    cache.del('courses');
+    return result;
   }
 
   // User enrollment methods

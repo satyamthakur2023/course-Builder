@@ -89,6 +89,138 @@
       "enrolled": 3200,
       "progress": 85,
       "createdAt": "2026-04-09T13:44:51.941Z"
+    },
+    {
+      "title": "Machine Learning",
+      "desc": "Latest Content on machine learning and beginner to advanced ",
+      "price": 999,
+      "level": "Beginner",
+      "cat": "development",
+      "time": "90",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/1L420xXpDTg?si=8A7Q20oMkopRt9ft",
+      "videoLinks": [],
+      "img": "https://youtu.be/1L420xXpDTg?si=8A7Q20oMkopRt9ft",
+      "id": 1775846741883,
+      "enrolled": 0,
+      "rating": "5.0",
+      "hasVideo": true,
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "freeContent": [
+        "Introduction"
+      ],
+      "paidContent": [
+        "Full Course Content"
+      ],
+      "createdAt": "2026-04-10T18:45:41.883Z"
+    },
+    {
+      "title": "machine learning",
+      "desc": "beginner to advanced version",
+      "price": 9999,
+      "level": "Beginner",
+      "cat": "ai",
+      "time": "90",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/1L420xXpDTg?si=7qOQBZX_P7rug4Ff",
+      "videoLinks": [],
+      "img": "https://youtu.be/1L420xXpDTg?si=7qOQBZX_P7rug4Ff",
+      "id": 1775847974455,
+      "enrolled": 0,
+      "rating": "5.0",
+      "hasVideo": true,
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "freeContent": [
+        "Introduction"
+      ],
+      "paidContent": [
+        "Full Course Content"
+      ],
+      "createdAt": "2026-04-10T19:06:14.455Z"
+    },
+    {
+      "title": "Frontend",
+      "desc": "A beginner to Medium level Concept to master coursed for react,bootstrap,html,css,java,tailwinds",
+      "price": 2999,
+      "level": "Beginner",
+      "cat": "development",
+      "time": "3h",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "videoLinks": [],
+      "img": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "hasVideo": true,
+      "id": 1778120130238,
+      "enrolled": 0,
+      "rating": "5.0",
+      "freeContent": [
+        "Introduction"
+      ],
+      "paidContent": [
+        "Full Course Content"
+      ],
+      "createdAt": "2026-05-07T02:15:30.238Z"
+    },
+    {
+      "title": "Frontend",
+      "desc": "Beginner to advanced",
+      "price": 2399,
+      "level": "Beginner",
+      "cat": "development",
+      "time": "4h",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "videoLinks": [],
+      "img": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "hasVideo": true,
+      "id": 1778120471319,
+      "enrolled": 0,
+      "rating": "5.0",
+      "freeContent": [
+        "Introduction"
+      ],
+      "paidContent": [
+        "Full Course Content"
+      ],
+      "createdAt": "2026-05-07T02:21:11.319Z"
+    },
+    {
+      "title": "Master frontend",
+      "desc": "Beginner to master frontends",
+      "price": 3999,
+      "level": "Beginner",
+      "cat": "development",
+      "time": "4h",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "videoUrl": "https://www.youtube.com/embed/rklidcZ-aLU",
+      "videoLinks": [],
+      "img": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "hasVideo": true,
+      "id": 1778120661756,
+      "enrolled": 0,
+      "rating": "5.0",
+      "createdAt": "2026-05-07T02:24:21.756Z"
+    },
+    {
+      "title": "Medium Level Of Frontend",
+      "desc": "Mater beginner to medium level in less than 5 hours",
+      "price": 1499,
+      "level": "Beginner",
+      "cat": "development",
+      "time": "5h",
+      "instructor": "Current User",
+      "thumbnailUrl": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "videoUrl": "https://www.youtube.com/embed/rklidcZ-aLU",
+      "videoLinks": [],
+      "img": "https://youtu.be/rklidcZ-aLU?si=OPehCO8nHBQis062",
+      "hasVideo": true,
+      "id": 1778120996835,
+      "enrolled": 0,
+      "rating": "5.0",
+      "createdAt": "2026-05-07T02:29:56.835Z"
     }
   ],
   "enrollments": [],

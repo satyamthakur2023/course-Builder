@@ -1,9 +1,9 @@
 <?php
 // --- Database Credentials (Variables for MySQLi Connection) ---
-$db_host = 'sql107.byethost7.com';    // Correct MySQL Host
-$db_user = 'b7_40130868';             // Your DB User
-$db_pass = 'm5fzntvr';                        // ⚠️ Replace with your actual DB password
-$db_name = 'b7_40130868_risegen';    // Your DB Name
+$db_host = 'sql107.byethost7.com';
+$db_user = 'b7_40130868';
+$db_pass = '1cbjvqfy';
+$db_name = 'b7_40130868_risegen';
 
 // --- Database Credentials (Constants for PDO/Other Scripts) ---
 // Defines constants (DB_HOST, etc.) to resolve the "Undefined constant" error in admin_dashboard.php
@@ -19,7 +19,13 @@ session_start();
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
-header("Access-Control-Allow-Origin: http://localhost:3000");
+$allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'https://b7_40130868.byethost7.com'];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins) || empty($origin)) {
+    header("Access-Control-Allow-Origin: " . ($origin ?: '*'));
+} else {
+    header("Access-Control-Allow-Origin: *");
+}
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");

@@ -21,16 +21,16 @@ const AppContent = () => {
   const { showToast } = useToast();
   
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { courses, notifications, loading, error, setCourses, addCourse, updateCourse, deleteCourse, setLoading, setError, getStats, markNotificationRead } = useCourseStore();
+  const { courses, notifications, loading, error, setCourses, addCourse, updateCourse, deleteCourse, setLoading, setError, getStats, markNotificationRead, cacheValid } = useCourseStore();
   
   const stats = getStats();
 
   useEffect(() => {
-    if (courses.length === 0) loadDefaultCourses();
+    if (!cacheValid) loadDefaultCourses();
     const darkMode = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(darkMode);
     if (darkMode) document.documentElement.classList.add('dark');
-  }, [courses.length]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -63,18 +63,24 @@ const AppContent = () => {
   }, [showNotifications, showUserMenu]);
 
   const loadDefaultCourses = async () => {
+    setLoading(true);
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const apiUrl = isLocal ? 'https://b7_40130868.byethost7.com/api/courses.php' : '/api/courses.php';
     try {
-      const response = await fetch('/api/courses.php', { credentials: 'include' });
+      const response = await fetch(apiUrl, { credentials: 'include' });
       const data = await response.json();
-      if (data.success) {
+      if (data.success && data.courses && data.courses.length > 0) {
         setCourses(data.courses);
-      } else {
-        throw new Error('API failed');
+        setLoading(false);
+        return;
       }
     } catch (error) {
-      console.log('Loading default courses...');
-      const defaultCourses = [
-        {id:1,title:'Full Stack Web Development',desc:'Master HTML, CSS, JS, React, Node.js and build dynamic web apps.',level:'Intermediate',rating:'4.8',time:'8h 30m',cat:'development',instructor:'John Parker',img:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop',price:99,enrolled:1250,progress:65,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['Introduction to Web Development','Setting up Development Environment'],paidContent:['Advanced React Concepts','Node.js Backend','Database Integration','Deployment Strategies']},
+      console.log('PHP API unavailable, loading default courses...');
+    } finally {
+      setLoading(false);
+    }
+    const defaultCourses = [
+        {id:0,title:'React JS Full Course for Beginners',desc:'Complete React JS tutorial for beginners. Learn React hooks, components, state management, and build real projects from scratch.',level:'Beginner',rating:'4.9',time:'12h 30m',cat:'development',instructor:'Bro Code',img:'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=200&fit=crop',price:0,enrolled:45200,progress:0,hasVideo:true,videoUrl:'https://www.youtube.com/embed/1L420xXpDTg',freeContent:['Introduction to React','Setting Up Environment','JSX Basics','Components & Props'],paidContent:['React Hooks Deep Dive','State Management','React Router','Building Projects','Deployment']},{id:1,title:'Full Stack Web Development',desc:'Master HTML, CSS, JS, React, Node.js and build dynamic web apps.',level:'Intermediate',rating:'4.8',time:'8h 30m',cat:'development',instructor:'John Parker',img:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop',price:99,enrolled:1250,progress:65,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['Introduction to Web Development','Setting up Development Environment'],paidContent:['Advanced React Concepts','Node.js Backend','Database Integration','Deployment Strategies']},
         {id:2,title:'Machine Learning Basics',desc:'Understand algorithms, train models, and deploy ML apps with Python.',level:'Advanced',rating:'4.9',time:'10h',cat:'ai',instructor:'Dr. Aisha Khan',img:'https://images.unsplash.com/photo-1581090700227-1e37b190418e?w=400&h=200&fit=crop',price:149,enrolled:890,progress:0,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['What is Machine Learning?','Python Basics for ML'],paidContent:['Supervised Learning','Neural Networks','Model Deployment','Real-world Projects']},
         {id:3,title:'UI/UX Design for Beginners',desc:'Learn Figma, typography, wireframing, and design psychology.',level:'Beginner',rating:'4.6',time:'6h 45m',cat:'design',instructor:'Elena Rose',img:'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop',price:79,enrolled:2100,progress:100,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['Design Principles','Color Theory Basics'],paidContent:['Advanced Figma','User Research','Prototyping','Portfolio Building']},
         {id:4,title:'Advanced React Development',desc:'Deep dive into React hooks, context, performance optimization, and testing.',level:'Advanced',rating:'4.9',time:'12h 15m',cat:'development',instructor:'Sarah Chen',img:'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=200&fit=crop',price:179,enrolled:756,progress:45,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['React Basics Review','Hooks Introduction'],paidContent:['Advanced Hooks','Context API','Performance Optimization','Testing Strategies']},
@@ -118,10 +124,8 @@ const AppContent = () => {
         {id:42,title:'Augmented Reality Development',desc:'Create AR experiences for mobile apps using ARKit and ARCore.',level:'Advanced',rating:'4.8',time:'13h 30m',cat:'development',instructor:'Carlos Rodriguez',img:'https://images.unsplash.com/photo-1592478411213-6153e4ebc696?w=400&h=200&fit=crop',price:209,enrolled:345,progress:0,hasVideo:true,videoUrl:'https://www.youtube.com/embed/dQw4w9WgXcQ',freeContent:['AR Fundamentals','ARKit Basics'],paidContent:['Advanced AR Features','3D Object Tracking','AR Games','Publishing AR Apps']}
       ];
       console.log('Setting', defaultCourses.length, 'courses');
-      // Clear localStorage to ensure fresh data
-      localStorage.removeItem('courses');
       setCourses(defaultCourses);
-    }
+      setLoading(false);
   };
 
   const handleCourseAction = async (action, courseData, courseId) => {
@@ -133,7 +137,7 @@ const AppContent = () => {
         case 'add':
           const validation = validateCourse(courseData);
           if (!validation.isValid) throw new Error(validation.errors[0]);
-          result = { ...courseData, id: Date.now(), enrolled: 0, rating: '5.0', hasVideo: true, videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', freeContent: ['Introduction'], paidContent: ['Full Course Content'] };
+          result = { ...courseData, id: Date.now(), enrolled: 0, rating: '5.0', hasVideo: !!courseData.videoUrl };
           addCourse(result);
           showToast('Course created successfully!', 'success');
           // Notify all students about new course

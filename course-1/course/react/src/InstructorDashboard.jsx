@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Eye, X, Plus, Users, Star, DollarSign, BookOpen, TrendingUp, Upload, Image, BarChart3, Calendar, Award, Target, Filter, Search, Grid, List, Settings, Bell, Download, Home, MessageSquare, FileText, CreditCard, User, Play, Pause, SkipForward, Volume2, Bookmark, Share2, ThumbsUp, Clock, Globe, Video, Headphones, Monitor } from 'lucide-react';
+import { Edit, Trash2, Eye, X, Plus, Users, Star, DollarSign, BookOpen, TrendingUp, Upload, Image, BarChart3, Calendar, Award, Target, Filter, Search, Grid, List, Settings, Bell, Download, Home, MessageSquare, FileText, CreditCard, User, Play, Pause, SkipForward, Volume2, Bookmark, Share2, ThumbsUp, Clock, Globe, Video, Headphones, Monitor, AlertTriangle, Crown, Zap, Shield, Layers } from 'lucide-react';
 import StatCard from './components/StatCard.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 import { useToast } from './components/Toast';
+import useAuthStore from './store/authStore.js';
+import CourseEditor from './components/CourseEditor.jsx';
 
 const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCourse }) => {
   const { showToast } = useToast();
+  const { getTrialDaysLeft, isTrialExpired, isSubscribed, subscribe, PLANS } = useAuthStore();
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('pro');
+  const [subLoading, setSubLoading] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const trialDaysLeft = getTrialDaysLeft();
+  const trialExpired = isTrialExpired();
+  const subscribed = isSubscribed();
+  const canCreate = subscribed || !trialExpired;
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -16,7 +27,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
   const [isLoading, setIsLoading] = useState(false);
   const [courseForm, setCourseForm] = useState({
     title: '', desc: '', price: '', level: 'Beginner', cat: 'development', time: '', instructor: 'Current User',
-    thumbnailUrl: '', videoLinks: []
+    thumbnailUrl: '', videoUrl: '', videoLinks: []
   });
 
   useEffect(() => {
@@ -49,6 +60,35 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
     return matchesSearch && matchesLevel;
   });
 
+  const toEmbedUrl = (url) => {
+    if (!url) return null;
+    // Already embed
+    if (url.includes('youtube.com/embed/')) return url;
+    // youtu.be/ID
+    const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+    if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+    // youtube.com/watch?v=ID
+    const watchMatch = url.match(/[?&]v=([^?&]+)/);
+    if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
+    return url;
+  };
+
+  const handleSubscribe = async () => {
+    setSubLoading(true);
+    await new Promise(r => setTimeout(r, 1200)); // simulate payment
+    const ok = subscribe(selectedPlan);
+    setSubLoading(false);
+    if (ok) {
+      setShowSubModal(false);
+      showToast(`🎉 ${PLANS[selectedPlan].label} plan activated! Happy teaching!`, 'success');
+    }
+  };
+
+  const openAddModal = () => {
+    if (!canCreate) { setShowSubModal(true); return; }
+    setShowAddModal(true);
+  };
+
   const handleSubmit = async (e, isEdit = false) => {
     e.preventDefault();
     if (!courseForm.title || !courseForm.desc || !courseForm.price) return;
@@ -58,7 +98,9 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
       const courseData = {
         ...courseForm,
         price: parseInt(courseForm.price),
-        img: courseForm.thumbnailUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop'
+        img: courseForm.thumbnailUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop',
+        videoUrl: toEmbedUrl(courseForm.videoUrl),
+        hasVideo: !!courseForm.videoUrl
       };
 
       if (isEdit && selectedCourse) {
@@ -69,12 +111,12 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
       } else {
         const createdCourse = onAddCourse ? await onAddCourse(courseData) : null;
         const courseToSave = createdCourse || { ...courseData, id: Date.now(), enrolled: 0, rating: '5.0', createdAt: new Date().toISOString() };
-        setLocalCourses(prev => [...prev, courseToSave]);
+        setLocalCourses(prev => [courseToSave, ...prev]);
         showToast('Course created successfully!', 'success');
         setShowAddModal(false);
       }
       
-      setCourseForm({ title: '', desc: '', price: '', level: 'Beginner', cat: 'development', time: '', instructor: 'Current User', thumbnailUrl: '', videoLinks: [] });
+      setCourseForm({ title: '', desc: '', price: '', level: 'Beginner', cat: 'development', time: '', instructor: 'Current User', thumbnailUrl: '', videoUrl: '', videoLinks: [] });
       setSelectedCourse(null);
     } catch (error) {
       showToast(`Failed to ${isEdit ? 'update' : 'create'} course`, 'error');
@@ -86,8 +128,8 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
   const editCourse = (course) => {
     setSelectedCourse(course);
     setCourseForm({
-      title: course.title, desc: course.desc, price: course.price.toString(), level: course.level, 
-      cat: course.cat, time: course.time, instructor: course.instructor, thumbnailUrl: course.thumbnailUrl || '', videoLinks: course.videoLinks || []
+      title: course.title, desc: course.desc, price: course.price.toString(), level: course.level,
+      cat: course.cat, time: course.time, instructor: course.instructor, thumbnailUrl: course.thumbnailUrl || '', videoUrl: course.videoUrl || '', videoLinks: course.videoLinks || []
     });
     setShowEditModal(true);
   };
@@ -239,7 +281,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
-          { icon: Plus, title: 'Create Course', desc: 'Start building your next course', color: 'blue', action: 'Get Started', onClick: () => setShowAddModal(true) },
+          { icon: Plus, title: 'Create Course', desc: 'Start building your next course', color: 'blue', action: 'Get Started', onClick: openAddModal },
           { icon: BarChart3, title: 'View Analytics', desc: 'Track your teaching performance', color: 'green', action: 'View Reports', onClick: () => setActiveTab('analytics') },
           { icon: Users, title: 'Manage Students', desc: 'Connect with your learners', color: 'purple', action: 'View Students', onClick: () => setActiveTab('students') }
         ].map((item, idx) => (
@@ -302,7 +344,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
             <option value="Intermediate">Intermediate</option>
             <option value="Advanced">Advanced</option>
           </select>
-          <button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2">
+          <button onClick={openAddModal} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2">
             <Plus className="w-4 h-4" />
             <span>Add Course</span>
           </button>
@@ -314,7 +356,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
           <BookOpen className="w-16 h-16 mx-auto mb-4 text-slate-400" />
           <h3 className="text-xl font-semibold text-white mb-2">No courses found</h3>
           <p className="text-slate-400 mb-6">Create your first course to get started</p>
-          <button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold">
+          <button onClick={openAddModal} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold">
             Create Course
           </button>
         </div>
@@ -334,6 +376,9 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
                   <button onClick={() => editCourse(course)} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                     <Edit className="w-4 h-4" />
                   </button>
+                  <button onClick={() => setEditingCourse(course)} className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Edit course content">
+                    <Layers className="w-4 h-4" />
+                  </button>
                   <button onClick={() => deleteCourse(course.id, course.title)} className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -342,7 +387,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
               <div className="p-4">
                 <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{course.title}</h3>
                 <p className="text-slate-300 text-sm mb-3 line-clamp-2">{course.desc}</p>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-sm mb-3">
                   <span className="text-green-400 font-bold">₹{course.price?.toLocaleString()}</span>
                   <span className="text-slate-400 flex items-center">
                     <Users className="w-3 h-3 mr-1" />
@@ -353,6 +398,13 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
                     {course.rating}
                   </span>
                 </div>
+                <button
+                  onClick={() => setEditingCourse(course)}
+                  className="w-full flex items-center justify-center space-x-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 hover:text-purple-200 py-2 rounded-lg text-sm font-medium transition-all"
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>Edit Content & Videos</span>
+                </button>
               </div>
             </div>
           ))}
@@ -1370,7 +1422,7 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
               </button>
             </div>
             {activeTab === 'courses' && (
-              <button onClick={() => setShowAddModal(true)} data-add-course className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 transition-all transform hover:scale-105 shadow-lg btn-hover-lift">
+              <button onClick={openAddModal} data-add-course className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 transition-all transform hover:scale-105 shadow-lg btn-hover-lift">
                 <Plus className="w-5 h-5" />
                 <span>Create Course</span>
               </button>
@@ -1384,10 +1436,102 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
           </div>
         </div>
 
+        {/* Trial / Subscription Banner */}
+        {!subscribed && (
+          <div className={`mb-6 rounded-2xl p-4 flex items-center justify-between border ${
+            trialExpired
+              ? 'bg-red-500/10 border-red-500/30'
+              : trialDaysLeft <= 7
+              ? 'bg-yellow-500/10 border-yellow-500/30'
+              : 'bg-blue-500/10 border-blue-500/30'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className={`w-5 h-5 flex-shrink-0 ${
+                trialExpired ? 'text-red-400' : trialDaysLeft <= 7 ? 'text-yellow-400' : 'text-blue-400'
+              }`} />
+              <div>
+                <p className={`font-semibold text-sm ${
+                  trialExpired ? 'text-red-300' : trialDaysLeft <= 7 ? 'text-yellow-300' : 'text-blue-300'
+                }`}>
+                  {trialExpired
+                    ? 'Your free trial has expired — new course creation is locked.'
+                    : `Free trial: ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
+                </p>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  {trialExpired
+                    ? 'Subscribe to unlock course creation and keep your existing courses live.'
+                    : 'After 30 days, subscribe to continue creating courses.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSubModal(true)}
+              className="ml-4 flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all"
+            >
+              <Crown className="w-4 h-4" />
+              <span>Upgrade</span>
+            </button>
+          </div>
+        )}
+
         {renderContent()}
       </div>
 
-      {/* Modals */}
+      {editingCourse && (
+        <CourseEditor course={editingCourse} onClose={() => setEditingCourse(null)} />
+      )}
+
+      {/* Subscription Modal */}
+      {showSubModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-center">
+              <Crown className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-white">Upgrade to Keep Teaching</h2>
+              <p className="text-purple-200 mt-1">
+                {trialExpired ? 'Your 30-day free trial has ended.' : `${trialDaysLeft} days left in your trial.`} Choose a plan to continue.
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {Object.entries(PLANS).map(([key, plan]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedPlan(key)}
+                    className={`relative p-4 rounded-xl border-2 text-left transition-all ${
+                      selectedPlan === key
+                        ? 'border-purple-500 bg-purple-500/20'
+                        : 'border-slate-600 bg-slate-800/50 hover:border-slate-500'
+                    }`}
+                  >
+                    {key === 'pro' && (
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-3 py-0.5 rounded-full font-semibold">Most Popular</span>
+                    )}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${
+                      key === 'basic' ? 'bg-blue-500/20' : key === 'pro' ? 'bg-purple-500/20' : 'bg-yellow-500/20'
+                    }`}>
+                      {key === 'basic' ? <Zap className="w-4 h-4 text-blue-400" /> : key === 'pro' ? <Crown className="w-4 h-4 text-purple-400" /> : <Shield className="w-4 h-4 text-yellow-400" />}
+                    </div>
+                    <p className="text-white font-bold">{plan.label}</p>
+                    <p className="text-2xl font-bold text-white mt-1">₹{plan.price}<span className="text-sm text-slate-400">/yr</span></p>
+                    <p className="text-slate-400 text-xs mt-2">{plan.maxCourses === Infinity ? 'Unlimited' : `Up to ${plan.maxCourses}`} courses</p>
+                  </button>
+                ))}
+              </div>
+              <div className="flex space-x-3">
+                <button onClick={() => setShowSubModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-semibold transition-colors">
+                  {trialExpired ? 'Cancel' : 'Continue Trial'}
+                </button>
+                <button onClick={handleSubscribe} disabled={subLoading} className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold transition-all disabled:opacity-60 flex items-center justify-center space-x-2">
+                  {subLoading ? <LoadingSpinner size="small" /> : <><Crown className="w-4 h-4" /><span>Subscribe — ₹{PLANS[selectedPlan].price}/yr</span></>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Course Create/Edit Modal */}
       {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
@@ -1423,7 +1567,8 @@ const InstructorDashboard = ({ courses, onAddCourse, onUpdateCourse, onDeleteCou
                 </select>
                 <input type="text" placeholder="Duration (e.g., 8h 30m)" value={courseForm.time} onChange={(e) => setCourseForm({...courseForm, time: e.target.value})} className="bg-slate-800 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" required />
               </div>
-              <input type="url" placeholder="Thumbnail URL" value={courseForm.thumbnailUrl} onChange={(e) => setCourseForm({...courseForm, thumbnailUrl: e.target.value})} className="w-full bg-slate-800 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" />
+              <input type="url" placeholder="Thumbnail Image URL" value={courseForm.thumbnailUrl} onChange={(e) => setCourseForm({...courseForm, thumbnailUrl: e.target.value})} className="w-full bg-slate-800 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" />
+              <input type="url" placeholder="Video URL (YouTube or direct link)" value={courseForm.videoUrl} onChange={(e) => setCourseForm({...courseForm, videoUrl: e.target.value})} className="w-full bg-slate-800 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" />
               <div className="flex space-x-3">
                 <button type="button" onClick={() => (setShowAddModal(false), setShowEditModal(false))} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-semibold transition-colors">
                   Cancel
